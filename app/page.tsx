@@ -1,56 +1,23 @@
-'use client'
+"use client";
 
-import { useState, useEffect } from "react"
-import Navbars from "./layout/Navbars";
-import Footer from "./layout/Footer";
+import { useAuth } from "./api/context/AuthContext";
 import PublicDashboard from "./layout/PublicDashboard";
 import PrivateDashboard from "./layout/PrivateDashboard";
-// interface UserData {
-//   id:number ,
-//   username: string,
-//   email: string
-// }
-export default function Home() {
-  const [user, setUser] = useState<{ username: string } | null>(null);
-  const [loadingUser, setLoadingUser] = useState(true);
 
-  // cek login saat load halaman
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const res = await fetch("/api/me"); // endpoint ambil user dari JWT
-        if (res.ok) {
-          const data = await res.json();
-          setUser(data.user);
-        } else {
-          setUser(null);
-        }
-      } catch {
-        setUser(null);
-      } finally {
-        setLoadingUser(false);
-      }
-    };
-    fetchUser();
-  }, []);
+export default function Home() {
+  const { user, loadingUser } = useAuth();
+
+  if (loadingUser) {
+    return (
+      <div className="flex justify-center items-center py-20 text-gray-500">
+        Checking session...
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <Navbars user={user} setUser={setUser} />
-
-      <main className="flex-1 flex flex-col items-center justify-center p-8">
-        {loadingUser ? (
-          <p className="text-gray-500">Checking session...</p>
-        ) : user ? (
-          // Jika login Valid
-          <PrivateDashboard user={user} />
-        ) : (
-          // Public Dashboard
-          <PublicDashboard />
-        )}
-      </main>
-
-      <Footer />
+    <div className="flex flex-col items-center justify-center p-8">
+      {user ? <PrivateDashboard user={user} /> : <PublicDashboard />}
     </div>
   );
 }

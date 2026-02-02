@@ -1,99 +1,74 @@
-'use client'
+"use client";
 
-import React, { useState, useEffect } from 'react'
-import Navbars from '../layout/Navbars'
-import Footer from '../layout/Footer'
+import { useAuth } from "../api/context/AuthContext";
 
 export default function About() {
-  const [user, setUser] = useState<{ username: string; email: string } | null>(null)
-  const [loadingUser, setLoadingUser] = useState(true)
+  const { user, loadingUser } = useAuth();
 
-  // cek login saat load halaman
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const res = await fetch("/api/me") // endpoint ambil user dari JWT
-        if (res.ok) {
-          const data = await res.json()
-          setUser(data.user)
-        } else {
-          setUser(null)
-        }
-      } catch {
-        setUser(null)
-      } finally {
-        setLoadingUser(false)
-      }
-    }
-    fetchUser()
-  }, [])
+  if (loadingUser) {
+    return (
+      <div className="flex items-center justify-center py-20 text-gray-500">
+        Loading...
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen flex flex-col">
-      {/* Kirim user ke Navbar */}
-      <Navbars user={user} setUser={setUser} />
+    <main className="flex flex-col items-center justify-start p-8 space-y-10 w-full max-w-6xl mx-auto">
+      {/* Header */}
+      <section className="text-center max-w-3xl">
+        <h1 className="text-4xl font-bold mb-4">About Us</h1>
+        <p className="text-lg text-gray-600 dark:text-gray-300">
+          <span className="font-bold">Fatkhulloh Login</span> adalah platform
+          profesional yang dirancang untuk mempermudah manajemen tugas,
+          kolaborasi tim, dan produktivitas harian Anda.
+        </p>
 
-      {/* Tunggu fetch user selesai */}
-      {loadingUser ? (
-        <main className="flex-1 flex items-center justify-center p-8">
-          <p className="text-gray-500">Loading...</p>
-        </main>
-      ) : (
-        <main className="flex-1 flex flex-col items-center justify-start p-8 space-y-8 w-full max-w-6xl mx-auto">
-          {/* Header */}
-          <section className="text-center max-w-3xl">
-            <h1 className="text-4xl font-bold text-gray-800 mb-4">About Us</h1>
-            <p className="text-gray-600 text-lg">
-              <span className='font-bold'>Fatkhulloh Login</span> adalah platform profesional yang dirancang untuk mempermudah manajemen tugas, kolaborasi tim,
-              dan produktivitas harian Anda. Kami mengutamakan pengalaman pengguna yang intuitif, aman, dan efisien.
-            </p>
-            {user && (
-              <p className="mt-2 text-green-600 font-semibold">
-                Selamat datang, {user.username}! Anda sudah login.
-              </p>
-            )}
-          </section>
+        {user && (
+          <p className="mt-3 text-green-500 font-semibold">
+            Selamat datang, {user.username}! Anda sudah login.
+          </p>
+        )}
+      </section>
 
-          {/* Fitur/Keunggulan */}
-          <section className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl w-full">
-            <div className="p-6 border rounded-xl shadow hover:shadow-lg transition">
-              <h2 className="text-xl font-semibold mb-2">User Friendly</h2>
-              <p className="text-gray-500">
-                Antarmuka yang sederhana dan mudah digunakan, cocok untuk semua level pengguna.
-              </p>
-            </div>
-            <div className="p-6 border rounded-xl shadow hover:shadow-lg transition">
-              <h2 className="text-xl font-semibold mb-2">Keamanan Tinggi</h2>
-              <p className="text-gray-500">
-                Data Anda terlindungi dengan enkripsi terbaru dan sistem autentikasi yang aman.
-              </p>
-            </div>
-            <div className="p-6 border rounded-xl shadow hover:shadow-lg transition">
-              <h2 className="text-xl font-semibold mb-2">Produktivitas Maksimal</h2>
-              <p className="text-gray-500">
-                Fitur-fitur yang dirancang untuk membantu tim Anda bekerja lebih cepat dan efisien.
-              </p>
-            </div>
-          </section>
+      {/* Features */}
+      <section className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
+        <div className="p-6 border rounded-xl shadow hover:shadow-lg transition dark:border-gray-700">
+          <h2 className="text-xl font-semibold mb-2">User Friendly</h2>
+          <p className="text-gray-500 dark:text-gray-400">
+            Antarmuka sederhana dan mudah digunakan oleh semua pengguna.
+          </p>
+        </div>
 
-          {/* Call-to-action */}
-          {!user && (
-            <section className="text-center mt-8">
-              <p className="text-gray-600 mb-4">
-                Mulai tingkatkan produktivitas tim Anda hari ini!
-              </p>
-              <a
-                href="/register"
-                className="px-6 mt-5 py-3 bg-blue-600 text-white rounded-full font-semibold hover:bg-blue-700 transition"
-              >
-                Daftar Sekarang
-              </a>
-            </section>
-          )}
-        </main>
+        <div className="p-6 border rounded-xl shadow hover:shadow-lg transition dark:border-gray-700">
+          <h2 className="text-xl font-semibold mb-2">Keamanan Tinggi</h2>
+          <p className="text-gray-500 dark:text-gray-400">
+            Data terlindungi dengan sistem autentikasi dan enkripsi modern.
+          </p>
+        </div>
+
+        <div className="p-6 border rounded-xl shadow hover:shadow-lg transition dark:border-gray-700">
+          <h2 className="text-xl font-semibold mb-2">Produktivitas Maksimal</h2>
+          <p className="text-gray-500 dark:text-gray-400">
+            Fitur dirancang untuk meningkatkan efisiensi kerja tim Anda.
+          </p>
+        </div>
+      </section>
+
+      {/* CTA */}
+      {!user && (
+        <section className="text-center mt-8">
+          <p className="text-gray-600 dark:text-gray-400 mb-4">
+            Mulai tingkatkan produktivitas tim Anda hari ini!
+          </p>
+          <a
+            href="/register"
+            className="px-8 py-3 bg-blue-600 text-white rounded-full font-semibold hover:bg-blue-700 transition"
+          >
+            Daftar Sekarang
+          </a>
+        </section>
       )}
-
-      <Footer />
-    </div>
-  )
+    </main>
+  );
 }
