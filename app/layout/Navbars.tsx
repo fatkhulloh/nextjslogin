@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useState, useEffect } from "react"
-import { ChevronDown } from "lucide-react"
+import { ChevronDown, Sun, Moon } from "lucide-react"
 
 interface NavbarsProps {
   user: { username: string } | null
@@ -11,8 +11,10 @@ interface NavbarsProps {
 
 export default function Navbars({ user, setUser }: NavbarsProps) {
   const [dropdownOpen, setDropdownOpen] = useState(false)
-  const [loadingUser, setLoadingUser] = useState(true) // <-- baru
+  const [loadingUser, setLoadingUser] = useState(true)
+  const [darkMode, setDarkMode] = useState(false)
 
+  // cek user login
   useEffect(() => {
     const fetchUser = async () => {
       try {
@@ -26,11 +28,25 @@ export default function Navbars({ user, setUser }: NavbarsProps) {
       } catch {
         setUser(null)
       } finally {
-        setLoadingUser(false) // <-- selesai cek
+        setLoadingUser(false)
       }
     }
     fetchUser()
   }, [setUser])
+
+  // cek localStorage untuk darkMode saat pertama kali load
+  useEffect(() => {
+    const savedMode = localStorage.getItem("darkMode")
+    if (savedMode === "true") {
+      setDarkMode(true)
+      document.body.classList.add("bg-gray-900", "text-white")
+      document.body.classList.remove("bg-white", "text-gray-800")
+    } else {
+      setDarkMode(false)
+      document.body.classList.remove("bg-gray-900", "text-white")
+      document.body.classList.add("bg-white", "text-gray-800")
+    }
+  }, [])
 
   const handleLogout = async () => {
     await fetch("/api/logout", { method: "POST" })
@@ -39,17 +55,38 @@ export default function Navbars({ user, setUser }: NavbarsProps) {
     window.location.href = "/"
   }
 
-  // Jika masih loading, jangan render tombol login/daftar dulu
+  const toggleDarkMode = () => {
+    setDarkMode(!darkMode)
+    if (!darkMode) {
+      document.body.classList.add("bg-gray-900", "text-white")
+      document.body.classList.remove("bg-white", "text-gray-800")
+      localStorage.setItem("darkMode", "true")
+    } else {
+      document.body.classList.remove("bg-gray-900", "text-white")
+      document.body.classList.add("bg-white", "text-gray-800")
+      localStorage.setItem("darkMode", "false")
+    }
+  }
+
   if (loadingUser) return null
 
   return (
-    <nav className="w-full bg-white shadow-sm">
+    <nav className="w-full shadow-sm dark:bg-gray-800 transition-colors">
       <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
         <h1 className="text-xl font-bold text-blue-600">Fatkhulloh_Login</h1>
 
-        <div className="flex items-center gap-6 text-gray-600 font-medium">
+        <div className="flex items-center gap-4 md:gap-6 text-gray-600 font-medium">
           <Link href="/" className="hover:text-blue-600">Beranda</Link>
           <Link href="/about" className="hover:text-blue-600">About</Link>
+
+          {/* Dark Mode Toggle */}
+          <button
+            onClick={toggleDarkMode}
+            className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition"
+            title={darkMode ? "Light Mode" : "Dark Mode"}
+          >
+            {darkMode ? <Sun size={18} /> : <Moon size={18} />}
+          </button>
 
           {!user && (
             <>
@@ -72,17 +109,17 @@ export default function Navbars({ user, setUser }: NavbarsProps) {
           {user && (
             <div className="relative">
               <button
-                className="flex items-center gap-1 px-4 py-2 rounded-full border hover:bg-gray-100 transition"
+                className="flex items-center gap-1 px-4 py-2 rounded-full border hover:bg-gray-100 dark:hover:bg-gray-700 transition"
                 onClick={() => setDropdownOpen(!dropdownOpen)}
               >
                 {user.username} <ChevronDown size={16} />
               </button>
 
               {dropdownOpen && (
-                <div className="absolute right-0 mt-2 w-40 bg-white border rounded-lg shadow-lg py-2 z-50">
+                <div className="absolute right-0 mt-2 w-40 bg-white dark:bg-gray-800 border rounded-lg shadow-lg py-2 z-50">
                   <button
                     onClick={handleLogout}
-                    className="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 transition"
+                    className="w-full text-left px-4 py-2 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition"
                   >
                     Logout
                   </button>
