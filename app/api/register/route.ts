@@ -11,12 +11,20 @@ export async function POST(req: NextRequest) {
     }
 
     // Koneksi MySQL
+    // const connection = await mysql.createConnection({
+    //   host: process.env.MYSQL_HOST,
+    //   user: process.env.MYSQL_USER,
+    //   password: process.env.MYSQL_PASSWORD,
+    //   database: process.env.MYSQL_DATABASE,
+    // });
     const connection = await mysql.createConnection({
-      host: process.env.MYSQL_HOST,
-      user: process.env.MYSQL_USER,
-      password: process.env.MYSQL_PASSWORD,
-      database: process.env.MYSQL_DATABASE,
-    });
+        // host: 'mysql-fatkhulloh.alwaysdata.net',  // Host AlwaysData
+        host: 'mysql-fatkhulloh6939.alwaysdata.net',  // Host AlwaysData
+        // host: 'https://ssh-fatkhulloh6939.alwaysdata.net',  // Host AlwaysData
+        user: 'fatkhulloh6939',                   // User database
+        password: 'Dragonfly6939721@',         // Password database
+        database: 'fatkhulloh6939_login',         // Nama database
+      });
 
     try {
       // Cek apakah email atau username sudah ada

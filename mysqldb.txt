@@ -1,0 +1,5 @@
+Database name: fatkhulloh6939_login → ini nama databasenya
+
+Permissions / user: fatkhulloh6939 → ini user yang bisa akses database
+
+Annotation: hanya catatan/deskripsi (login)
