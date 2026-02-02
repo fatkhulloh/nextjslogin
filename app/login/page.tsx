@@ -6,7 +6,7 @@ import { useAuth } from "../api/context/AuthContext";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { updateAuth } = useAuth(); // dariContext
+  const { updateAuth } = useAuth();
 
   const [email, setEmail] = useState("");
   const [pass, setPass] = useState("");
@@ -32,10 +32,10 @@ export default function LoginPage() {
         setError(data.error || "Login gagal");
         return;
       }
-     
+
       await updateAuth();
 
-      router.push("/"); 
+      router.push("/");
     } catch {
       setError("Server error");
     } finally {
@@ -44,14 +44,29 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4">
+    <div className="min-h-screen flex items-center justify-center px-4 relative">
+
+      {/* FullScreen Loading*/}
+      {loading && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="flex flex-col items-center gap-4">
+            <span className="w-14 h-14 border-4 border-white border-t-transparent rounded-full animate-spin" />
+            <p className="text-white font-medium tracking-wide">
+              Logging in...
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* LoginCard */}
       <div
-        className="
+        className={`
           w-full max-w-md rounded-2xl shadow-lg p-8
           bg-white text-gray-800
           dark:bg-gray-800 dark:text-white
-          transition-colors
-        "
+          transition-all duration-300
+          ${loading ? "opacity-70 scale-[0.98]" : ""}
+        `}
       >
         <h1 className="text-3xl font-bold text-center mb-6">
           Login
@@ -71,6 +86,7 @@ export default function LoginPage() {
             <input
               type="email"
               required
+              disabled={loading}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="
@@ -78,6 +94,7 @@ export default function LoginPage() {
                 bg-gray-100 text-gray-800 border-gray-300
                 dark:bg-gray-700 dark:text-white dark:border-gray-600
                 focus:outline-none focus:ring-2 focus:ring-blue-500
+                disabled:opacity-60 disabled:cursor-not-allowed
               "
             />
           </div>
@@ -89,6 +106,7 @@ export default function LoginPage() {
             <input
               type="password"
               required
+              disabled={loading}
               value={pass}
               onChange={(e) => setPass(e.target.value)}
               className="
@@ -96,6 +114,7 @@ export default function LoginPage() {
                 bg-gray-100 text-gray-800 border-gray-300
                 dark:bg-gray-700 dark:text-white dark:border-gray-600
                 focus:outline-none focus:ring-2 focus:ring-blue-500
+                disabled:opacity-60 disabled:cursor-not-allowed
               "
             />
           </div>
@@ -107,10 +126,11 @@ export default function LoginPage() {
               w-full py-3 rounded-lg font-semibold
               bg-blue-600 text-white
               hover:bg-blue-700
-              disabled:opacity-60 transition
+              disabled:opacity-60 disabled:cursor-not-allowed
+              transition
             "
           >
-            {loading ? "Logging in..." : "Login"}
+            Login
           </button>
         </form>
 

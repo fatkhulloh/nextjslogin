@@ -27,7 +27,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       suppressHydrationWarning
     >
       <head>
-{/* 
+
         <script
           dangerouslySetInnerHTML={{
             __html: `
@@ -41,7 +41,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               })();
             `,
           }}
-        /> */}
+        />
       </head>
 
       <body>
