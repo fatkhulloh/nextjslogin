@@ -1,20 +1,58 @@
 import { NextRequest, NextResponse } from "next/server";
 import mysql from "mysql2/promise";
 import bcrypt from "bcryptjs";
-// import jwt from "jsonwebtoken";
 import * as jwt from "jsonwebtoken";
 
+// Rate Limit
+const RATE_LIMIT = 5; // maksimal 5x login
+const WINDOW_MS = 60 * 1000; // 1 menit
+
+type RateData = {
+  count: number;
+  firstRequest: number;
+};
+
+const rateStore = new Map<string, RateData>();
 
 export async function POST(req: NextRequest) {
   try {
-    const { email, pass } = await req.json();
+    // Get Ip
+    const ip =
+      req.headers.get("x-forwarded-for")?.split(",")[0] ||
+      req.headers.get("x-real-ip") ||
+      "unknown";
 
-    // Validasi input
-    if (!email || !pass) {
-      return NextResponse.json({ error: "Semua field wajib diisi" }, { status: 400 });
+    const now = Date.now();
+    const rate = rateStore.get(ip);
+
+    if (!rate) {
+      rateStore.set(ip, { count: 1, firstRequest: now });
+    } else {
+      if (now - rate.firstRequest > WINDOW_MS) {
+        // lewat 1 menit → reset
+        rate.count = 1;
+        rate.firstRequest = now;
+      } else {
+        rate.count++;
+        if (rate.count > RATE_LIMIT) {
+          return NextResponse.json(
+            { error: "Terlalu banyak percobaan login, coba lagi 1 menit" },
+            { status: 429 }
+          );
+        }
+      }
     }
 
-    // Koneksi MySQL
+    // Get Email And Password
+    const { email, pass } = await req.json();
+
+    if (!email || !pass) {
+      return NextResponse.json(
+        { error: "Semua field wajib diisi" },
+        { status: 400 }
+      );
+    }
+
     const connection = await mysql.createConnection({
       host: process.env.MYSQL_HOST,
       user: process.env.MYSQL_USER,
@@ -23,7 +61,6 @@ export async function POST(req: NextRequest) {
     });
 
     try {
-
       const [rows] = await connection.execute(
         "SELECT id, username, email, password FROM users WHERE email = ?",
         [email]
@@ -31,56 +68,61 @@ export async function POST(req: NextRequest) {
 
       const users = rows as any[];
 
-        console.log(`Length: ${users.length}___ ${email}  __ ${pass}`);
       if (users.length === 0) {
-        console.log("Belum terdaftar");
-        return NextResponse.json({ error: "Email belum terdaftar" }, { status: 400 });
+        return NextResponse.json(
+          { error: "Email belum terdaftar" },
+          { status: 400 }
+        );
       }
 
       const _user = users[0];
-
-    //   const hashedPassword = await bcrypt.hash(pass, 10);
       const isMatch = await bcrypt.compare(pass, _user.password);
 
       if (!isMatch) {
-    //   if (hashedPassword === _user.password) {
-        console.log(`Email atau password salah`);
-        return NextResponse.json({ error: "Email atau password salah" }, { status: 400 });
+        return NextResponse.json(
+          { error: "Email atau password salah" },
+          { status: 400 }
+        );
       }
 
-      console.log("Login Berhasil");
-
-        // Buat JWT
+      // Jwt
       const token = jwt.sign(
         { id: _user.id, username: _user.username, email: _user.email },
         process.env.JWT_SECRET!,
         { expiresIn: "7d" }
       );
 
+      //reset Rate Limit
+      rateStore.delete(ip);
 
-
-      const response = NextResponse.json({message: "Login berhasil",
-            user: { id: _user.id, username: _user.username, email: _user.email },});
+      const response = NextResponse.json({
+        message: "Login berhasil",
+        user: {
+          id: _user.id,
+          username: _user.username,
+          email: _user.email,
+        },
+      });
 
       response.cookies.set({
         name: "token",
         value: token,
         httpOnly: true,
         path: "/",
-        maxAge: 60 * 60 * 24 * 7, // 7 hari
-        sameSite: "strict",
+        maxAge: 60 * 60 * 24 * 7,
+        sameSite: "lax",
         secure: process.env.NODE_ENV === "production",
       });
 
       return response;
-      // return NextResponse.json({
-      //   message: "Login berhasil",
-      //   user: { id: _user.id, username: _user.username, email: _user.email },
-      // });
     } finally {
       await connection.end();
     }
-  } catch (err: any) {
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
+  } catch (err) {
+    console.error(err);
+    return NextResponse.json(
+      { error: "Server error" },
+      { status: 500 }
+    );
   }
 }
