@@ -20,7 +20,16 @@ const Navbars = () => {
                     className="px-5 py-2 items-center rounded-full bg-blue-600 text-white font-semibold 
                                 hover:bg-blue-700 transition shadow-sm">
                     Login
-                    </Link>
+                </Link>
+
+                <Link href="/register"
+                className="px-8 py-2 rounded-full border-2 border-blue-600 
+                            text-blue-600 font-semibold hover:bg-blue-600 hover:text-white 
+                            transition"
+                >
+                Daftar
+                </Link>
+
 
                 </div>
             </div>
