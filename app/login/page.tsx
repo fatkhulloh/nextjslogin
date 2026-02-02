@@ -115,8 +115,8 @@ const Login = () => {
 
           <div className="flex items-center justify-between text-sm">
             <label className="flex items-center gap-2 text-gray-600">
-              <input type="checkbox" className="rounded" />
-              Ingat saya
+              {/* <input type="checkbox" className="rounded" />
+              Ingat saya */}
             </label>
             <Link href="/forgot-password" className="text-blue-600 hover:underline">
               Lupa password?
