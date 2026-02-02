@@ -50,7 +50,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
         />
       )}
 
-      <main className="min-h-[calc(100vh-130px)]">{children}</main>
+      <main className="min-h-[calc(100vh-80px)]">{children}</main>
 
       {!hideNavbar && <Footer />}
     </div>
