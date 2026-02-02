@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import mysql from "mysql2/promise";
 import bcrypt from "bcryptjs";
+// import jwt from "jsonwebtoken";
+import * as jwt from "jsonwebtoken";
+
 
 export async function POST(req: NextRequest) {
   try {
@@ -46,10 +49,34 @@ export async function POST(req: NextRequest) {
       }
 
       console.log("Login Berhasil");
-      return NextResponse.json({
-        message: "Login berhasil",
-        user: { id: _user.id, username: _user.username, email: _user.email },
+
+        // Buat JWT
+      const token = jwt.sign(
+        { id: _user.id, username: _user.username, email: _user.email },
+        process.env.JWT_SECRET!,
+        { expiresIn: "7d" }
+      );
+
+
+
+      const response = NextResponse.json({message: "Login berhasil",
+            user: { id: _user.id, username: _user.username, email: _user.email },});
+
+      response.cookies.set({
+        name: "token",
+        value: token,
+        httpOnly: true,
+        path: "/",
+        maxAge: 60 * 60 * 24 * 7, // 7 hari
+        sameSite: "strict",
+        secure: process.env.NODE_ENV === "production",
       });
+
+      return response;
+      // return NextResponse.json({
+      //   message: "Login berhasil",
+      //   user: { id: _user.id, username: _user.username, email: _user.email },
+      // });
     } finally {
       await connection.end();
     }
