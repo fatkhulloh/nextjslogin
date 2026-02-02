@@ -10,9 +10,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Semua field wajib diisi" }, { status: 400 });
     }
 
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
-
     // Koneksi MySQL
     const connection = await mysql.createConnection({
       host: process.env.MYSQL_HOST,
@@ -22,20 +19,32 @@ export async function POST(req: NextRequest) {
     });
 
     try {
+      // Cek apakah email atau username sudah ada
+      const [rows] = await connection.execute(
+        "SELECT id FROM users WHERE email = ? OR username = ?",
+        [email, username]
+      );
+
+      const existing = rows as any[];
+
+      if (existing.length > 0) {
+        return NextResponse.json({ error: "Username atau email sudah terdaftar" }, { status: 400 });
+      }
+
+      console.log(`Crypt: __${password}__`)
+      // Hash password
+      const hashedPassword = await bcrypt.hash(password, 10);
+
       await connection.execute(
         "INSERT INTO users (username, email, password) VALUES (?, ?, ?)",
         [username, email, hashedPassword]
       );
-    } catch (err: any) {
-      if (err.code === "ER_DUP_ENTRY") {
-        return NextResponse.json({ error: "Username atau email sudah terdaftar" }, { status: 400 });
-      }
-      return NextResponse.json({ error: err.message }, { status: 500 });
+
+      return NextResponse.json({ message: "Akun berhasil dibuat!" });
     } finally {
       await connection.end();
     }
 
-    return NextResponse.json({ message: "Akun berhasil dibuat!" });
   } catch (err: any) {
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
