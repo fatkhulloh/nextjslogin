@@ -1,116 +1,119 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import Link from 'next/link'
-import { User, Mail, Lock, Eye, EyeOff } from 'lucide-react'
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { Mail, Lock, Eye, EyeOff } from "lucide-react";
+import { useAuth } from "../api/context/AuthContext";
 
-export default function RegisterPage() {
-  const [showPassword, setShowPassword] = useState(false)
-  const [username, setUsername] = useState("")
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState("")
-  const [success, setSuccess] = useState("")
+export default function LoginPage() {
+  const router = useRouter();
+  const { updateAuth } = useAuth();
 
-  const router = useRouter()
+  const [email, setEmail] = useState("");
+  const [pass, setPass] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    setError("")
-    setSuccess("")
+    e.preventDefault();
+    setLoading(true);
+    setError("");
 
     try {
-      const res = await fetch("/api/register", {
+      const res = await fetch("/api/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, email, password })
-      })
+        body: JSON.stringify({ email, pass }),
+        credentials: "include",
+      });
 
-      const data = await res.json()
+      const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error || "Terjadi kesalahan")
-      } else {
-        setSuccess(data.message)
-        setTimeout(() => router.push("/login"), 1000)
+        setError(data.error || "Login gagal");
+        return;
       }
+
+      await updateAuth();
+      router.push("/");
     } catch {
-      setError("Server error")
+      setError("Server error");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <div
       className="
-        min-h-screen flex items-center justify-center px-4
+        min-h-screen flex items-center justify-center px-4 relative
         bg-gray-100 dark:bg-gray-900
         transition-colors
       "
     >
+      {/* Fullscreen Loading */}
+      {loading && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="flex flex-col items-center gap-4">
+            <span className="w-14 h-14 border-4 border-white border-t-transparent rounded-full animate-spin" />
+            <p className="text-white font-medium tracking-wide">
+              Logging in...
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Login Card */}
       <div
-        className="
+        className={`
           w-full max-w-md rounded-2xl shadow-xl p-8
           bg-white text-gray-800
           dark:bg-gray-800 dark:text-white
-          transition-colors
-        "
+          transition-all duration-300
+          ${loading ? "opacity-70 scale-[0.98]" : ""}
+        `}
       >
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold">
-            Buat Akun Baru 👋
+            Login 👋
           </h1>
           <p className="mt-2 text-gray-500 dark:text-gray-400">
-            Daftar untuk mulai menggunakan MyApp
+            Masuk ke akun kamu
           </p>
         </div>
 
-        {error && <p className="text-red-500 mb-3 text-center">{error}</p>}
-        {success && <p className="text-green-500 mb-3 text-center">{success}</p>}
+        {error && (
+          <p className="text-red-500 mb-3 text-center">
+            {error}
+          </p>
+        )}
 
-        <form className="space-y-5" onSubmit={handleSubmit}>
-          {/* Username */}
-          <div>
-            <label className="text-sm font-medium text-gray-600 dark:text-gray-300">
-              Username
-            </label>
-            <div className="relative mt-1">
-              <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-              <input
-                type="text"
-                className="
-                  w-full pl-10 pr-4 py-2.5 rounded-lg border
-                  bg-gray-100 text-gray-800 border-gray-300
-                  dark:bg-gray-700 dark:text-white dark:border-gray-600
-                  focus:outline-none focus:ring-2 focus:ring-blue-500
-                "
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-              />
-            </div>
-          </div>
-
+        <form onSubmit={handleSubmit} className="space-y-5">
           {/* Email */}
           <div>
             <label className="text-sm font-medium text-gray-600 dark:text-gray-300">
               Email
             </label>
             <div className="relative mt-1">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+              <Mail
+                size={18}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+              />
               <input
                 type="email"
+                required
+                disabled={loading}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 className="
                   w-full pl-10 pr-4 py-2.5 rounded-lg border
                   bg-gray-100 text-gray-800 border-gray-300
                   dark:bg-gray-700 dark:text-white dark:border-gray-600
                   focus:outline-none focus:ring-2 focus:ring-blue-500
+                  disabled:opacity-60 disabled:cursor-not-allowed
                 "
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
               />
             </div>
           </div>
@@ -121,28 +124,39 @@ export default function RegisterPage() {
               Password
             </label>
             <div className="relative mt-1">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+              <Lock
+                size={18}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+              />
               <input
-                type={showPassword ? 'text' : 'password'}
+                type={showPassword ? "text" : "password"}
+                required
+                disabled={loading}
+                value={pass}
+                onChange={(e) => setPass(e.target.value)}
                 className="
                   w-full pl-10 pr-10 py-2.5 rounded-lg border
                   bg-gray-100 text-gray-800 border-gray-300
                   dark:bg-gray-700 dark:text-white dark:border-gray-600
                   focus:outline-none focus:ring-2 focus:ring-blue-500
+                  disabled:opacity-60 disabled:cursor-not-allowed
                 "
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
+                className="
+                  absolute right-3 top-1/2 -translate-y-1/2
+                  text-gray-400 hover:text-gray-600
+                  dark:hover:text-white
+                "
               >
                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
           </div>
 
+          {/* Submit */}
           <button
             type="submit"
             disabled={loading}
@@ -153,17 +167,17 @@ export default function RegisterPage() {
               disabled:opacity-60 transition
             "
           >
-            {loading ? "Memproses..." : "Daftar"}
+            {loading ? "Memproses..." : "Login"}
           </button>
         </form>
 
         <p className="text-center text-sm mt-6 text-gray-500 dark:text-gray-400">
-          Sudah punya akun?{" "}
-          <Link href="/login" className="text-blue-600 hover:underline">
-            Login
+          Belum punya akun?{" "}
+          <Link href="/register" className="text-blue-600 hover:underline">
+            Daftar
           </Link>
         </p>
       </div>
     </div>
-  )
+  );
 }

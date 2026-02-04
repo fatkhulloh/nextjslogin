@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../api/context/AuthContext";
+import { Eye, EyeOff } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -10,6 +11,7 @@ export default function LoginPage() {
 
   const [email, setEmail] = useState("");
   const [pass, setPass] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -34,7 +36,6 @@ export default function LoginPage() {
       }
 
       await updateAuth();
-
       router.push("/");
     } catch {
       setError("Server error");
@@ -46,7 +47,7 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center px-4 relative">
 
-      {/* FullScreen Loading*/}
+      {/* Fullscreen Loading */}
       {loading && (
         <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
           <div className="flex flex-col items-center gap-4">
@@ -58,7 +59,7 @@ export default function LoginPage() {
         </div>
       )}
 
-      {/* LoginCard */}
+      {/* Login Card */}
       <div
         className={`
           w-full max-w-md rounded-2xl shadow-lg p-8
@@ -79,6 +80,8 @@ export default function LoginPage() {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-5">
+
+          {/* Email */}
           <div>
             <label className="block mb-1 font-medium">
               Email
@@ -99,26 +102,45 @@ export default function LoginPage() {
             />
           </div>
 
+          {/* Password */}
           <div>
             <label className="block mb-1 font-medium">
               Password
             </label>
-            <input
-              type="password"
-              required
-              disabled={loading}
-              value={pass}
-              onChange={(e) => setPass(e.target.value)}
-              className="
-                w-full px-4 py-3 rounded-lg border
-                bg-gray-100 text-gray-800 border-gray-300
-                dark:bg-gray-700 dark:text-white dark:border-gray-600
-                focus:outline-none focus:ring-2 focus:ring-blue-500
-                disabled:opacity-60 disabled:cursor-not-allowed
-              "
-            />
+
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                required
+                disabled={loading}
+                value={pass}
+                onChange={(e) => setPass(e.target.value)}
+                className="
+                  w-full px-4 py-3 pr-12 rounded-lg border
+                  bg-gray-100 text-gray-800 border-gray-300
+                  dark:bg-gray-700 dark:text-white dark:border-gray-600
+                  focus:outline-none focus:ring-2 focus:ring-blue-500
+                  disabled:opacity-60 disabled:cursor-not-allowed
+                "
+              />
+
+             <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="
+                  absolute inset-y-0 right-3 flex items-center
+                  text-gray-500 hover:text-gray-700
+                  dark:text-gray-300 dark:hover:text-white
+                "
+                tabIndex={-1}
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+
+            </div>
           </div>
 
+          {/* Submit */}
           <button
             type="submit"
             disabled={loading}

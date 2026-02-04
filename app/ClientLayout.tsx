@@ -6,7 +6,11 @@ import Navbars from "./layout/Navbars";
 import Footer from "./layout/Footer";
 import { useAuth } from "./api/context/AuthContext";
 
-export default function ClientLayout({ children }: { children: React.ReactNode }) {
+export default function ClientLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const pathname = usePathname();
   const { user, setUser, loadingUser } = useAuth();
 
@@ -14,21 +18,21 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
 
   const hideNavbar = pathname === "/login" || pathname === "/register";
 
-  // sync dark mode  before render (Hindari Glitch)
+  // Load theme before render (hindari flicker)
   useEffect(() => {
     const saved = localStorage.getItem("darkMode");
-    setDarkMode(saved === "true");
+    setDarkMode(saved ? saved === "true" : false);
   }, []);
 
-  // apply dark mode
+  // Apply theme ke <html>
   useEffect(() => {
     if (darkMode === null) return;
+
     const html = document.documentElement;
     html.classList.toggle("dark", darkMode);
     localStorage.setItem("darkMode", String(darkMode));
   }, [darkMode]);
 
- 
   if (loadingUser || darkMode === null) {
     return (
       <div className="min-h-screen bg-white dark:bg-gray-900 transition-colors" />
@@ -46,11 +50,13 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
           user={user}
           setUser={setUser}
           darkMode={darkMode}
-          toggleDarkMode={() => setDarkMode(!darkMode)}
+          toggleDarkMode={() => setDarkMode((prev) => !prev)}
         />
       )}
 
-      <main className="min-h-[calc(100vh-80px)]">{children}</main>
+      <main className="min-h-[calc(100vh-80px)]">
+        {children}
+      </main>
 
       {!hideNavbar && <Footer />}
     </div>

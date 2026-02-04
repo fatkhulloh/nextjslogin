@@ -83,14 +83,26 @@ export default function Navbars({
               </button>
 
               {dropdownOpen && (
-                <div className="absolute right-0 mt-2 w-40 bg-white dark:bg-gray-800 border rounded-lg shadow-lg py-2">
-                  <button
-                    onClick={handleLogout}
-                    className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700"
+                 <div
+                    className="
+                      absolute right-0 mt-2 w-40
+                      rounded-lg shadow-md
+                      bg-white text-black
+                      border border-gray-300
+                      dark:bg-gray-800 dark:text-white dark:border-gray-700
+                    "
                   >
-                    Logout
-                  </button>
-                </div>
+                    <button
+                      onClick={handleLogout}
+                      className="
+                        w-full text-left px-4 py-2
+                        hover:bg-gray-100
+                        dark:hover:bg-gray-700
+                      "
+                    >
+                      Logout
+                    </button>
+                  </div>
               )}
             </div>
           )}
