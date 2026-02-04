@@ -1,56 +1,68 @@
 import { NextResponse } from "next/server";
-import { supabase } from "@/app/lib/supabaseClient";
 import jwt from "jsonwebtoken";
+import { db } from "@/app/lib/db";
 
 export async function POST(req: Request) {
-  const { access_token } = await req.json();
+  try {
+    const { access_token } = await req.json();
 
-  if (!access_token) {
-    console.log("No access token");
-    return NextResponse.json({ error: "No access token" }, { status: 400 });
+    if (!access_token) {
+      return NextResponse.json({ error: "No access token" }, { status: 400 });
+    }
+
+    // Ambil user dari Supabase menggunakan access token
+    const { data: { user }, error: supabaseError } = await db.auth.getUser(access_token);
+
+    if (supabaseError || !user) {
+      return NextResponse.json({ error: "Cannot fetch user" }, { status: 400 });
+    }
+
+    console.log("Supabase user object:", user);
+
+    // Cek apakah email user sudah terdaftar di tabel users kita
+    const { data: existingUsers, error } = await db
+      .from("users")
+      .select("id, username, email")
+      .eq("email", user.email)
+      .single();
+
+    if (error || !existingUsers) {
+      return NextResponse.json(
+        { error: "Email belum terdaftar, silakan register terlebih dahulu" },
+        { status: 400 }
+      );
+    }
+
+    // Buat JWT
+    const token = jwt.sign(
+      {
+        id: existingUsers.id,
+        username: existingUsers.username,
+        email: existingUsers.email,
+      },
+      process.env.JWT_SECRET!,
+      { expiresIn: "7d" }
+    );
+
+    const response = NextResponse.json({
+      message: "Login berhasil",
+      user: existingUsers,
+    });
+
+    // Set JWT sebagai cookie
+    response.cookies.set({
+      name: "token",
+      value: token,
+      httpOnly: true,
+      path: "/",
+      maxAge: 60 * 60 * 24 * 7,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+    });
+
+    return response;
+  } catch (err) {
+    console.error(err);
+    return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
-
-  // Ambil user info dari Supabase menggunakan access_token
-  const { data: { user }, error } = await supabase.auth.getUser(access_token);
-
-  if (error || !user) {
-    console.log("Error getting user:", error);
-    return NextResponse.json({ error: "Gagal mengambil info user" }, { status: 400 });
-  }
-
-  // Log seluruh user untuk debugging
-  console.log("Supabase user object:", user);
-
-  // Buat JWT
-  const token = jwt.sign(
-    {
-      id: user.id,
-      username: user.user_metadata?.full_name || "UserGoogle",
-      email: user.email,
-    },
-    process.env.JWT_SECRET!,
-    { expiresIn: "7d" }
-  );
-
-  const response = NextResponse.json({
-    message: "Login berhasil",
-    user: {
-      id: user.id,
-      username: user.user_metadata?.full_name || "UserGoogle",
-      email: user.email,
-    },
-  });
-
-  // Set cookie JWT
-  response.cookies.set({
-    name: "token",
-    value: token,
-    httpOnly: true,
-    path: "/",
-    maxAge: 60 * 60 * 24 * 7,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-  });
-
-  return response;
 }
