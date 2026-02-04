@@ -3,9 +3,18 @@ import mysql from "mysql2/promise";
 import bcrypt from "bcryptjs";
 import * as jwt from "jsonwebtoken";
 
+/* ================= SUPABASE (COMMENTED) ================= */
+import { createClient } from "@supabase/supabase-js";
+
+const supabase = createClient(
+  process.env.SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
+/* ======================================================== */
+
 // Rate Limit
-const RATE_LIMIT = 5; // maksimal 5x login
-const WINDOW_MS = 60 * 1000; // 1 menit
+const RATE_LIMIT = 5;
+const WINDOW_MS = 60 * 1000;
 
 type RateData = {
   count: number;
@@ -16,7 +25,7 @@ const rateStore = new Map<string, RateData>();
 
 export async function POST(req: NextRequest) {
   try {
-    // Get Ip
+    // Get IP
     const ip =
       req.headers.get("x-forwarded-for")?.split(",")[0] ||
       req.headers.get("x-real-ip") ||
@@ -29,7 +38,6 @@ export async function POST(req: NextRequest) {
       rateStore.set(ip, { count: 1, firstRequest: now });
     } else {
       if (now - rate.firstRequest > WINDOW_MS) {
-        // lewat 1 menit → reset
         rate.count = 1;
         rate.firstRequest = now;
       } else {
@@ -43,7 +51,6 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Get Email And Password
     const { email, pass } = await req.json();
 
     if (!email || !pass) {
@@ -53,36 +60,56 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    /* ================= MYSQL (ACTIVE) ================= */
     // const connection = await mysql.createConnection({
-    //   host: process.env.MYSQL_HOST,
-    //   user: process.env.MYSQL_USER,
-    //   password: process.env.MYSQL_PASSWORD,
-    //   database: process.env.MYSQL_DATABASE,
+    //   host: "mysql-fatkhulloh6939.alwaysdata.net",
+    //   user: "fatkhulloh6939",
+    //   password: "Dragonfly6939721@",
+    //   database: "fatkhulloh6939_login",
     // });
-    const connection = await mysql.createConnection({
-      // host: 'mysql-fatkhulloh.alwaysdata.net',  // Host AlwaysData
-      host: 'mysql-fatkhulloh6939.alwaysdata.net',  // Host AlwaysData
-      user: 'fatkhulloh6939',                   // User database
-      password: 'Dragonfly6939721@',         // Password database
-      database: 'fatkhulloh6939_login',         // Nama database
-    });
+
     try {
-      const [rows] = await connection.execute(
-        "SELECT id, username, email, password FROM users WHERE email = ?",
-        [email]
-      );
+       /* ================= MYSQL (ACTIVE) ================= */
+      // const [rows] = await connection.execute(
+      //   "SELECT id, username, email, password FROM users WHERE email = ?",
+      //   [email]
+      // );
 
-      const users = rows as any[];
+      // const users = rows as any[];
 
-      if (users.length === 0) {
+      // if (users.length === 0) {
+      //   return NextResponse.json(
+      //     { error: "Email belum terdaftar" },
+      //     { status: 400 }
+      //   );
+      // }
+
+      // const _user = users[0];
+      // const isMatch = await bcrypt.compare(pass, _user.password);
+
+      // if (!isMatch) {
+      //   return NextResponse.json(
+      //     { error: "Email atau password salah" },
+      //     { status: 400 }
+      //   );
+      // }
+
+
+      //  ================ SUPABASE VERSION =================
+      const { data: users, error } = await supabase
+        .from("users")
+        .select("id, username, email, password")
+        .eq("email", email)
+        .single();
+
+      if (error || !users) {
         return NextResponse.json(
           { error: "Email belum terdaftar" },
           { status: 400 }
         );
       }
 
-      const _user = users[0];
-      const isMatch = await bcrypt.compare(pass, _user.password);
+      const isMatch = await bcrypt.compare(pass, users.password);
 
       if (!isMatch) {
         return NextResponse.json(
@@ -91,14 +118,15 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      // Jwt
+      const _user = users;
+      // ====================================================
+
       const token = jwt.sign(
         { id: _user.id, username: _user.username, email: _user.email },
         process.env.JWT_SECRET!,
         { expiresIn: "7d" }
       );
 
-      //reset Rate Limit
       rateStore.delete(ip);
 
       const response = NextResponse.json({
@@ -122,7 +150,8 @@ export async function POST(req: NextRequest) {
 
       return response;
     } finally {
-      await connection.end();
+      // for Mysql
+      // await connection.end();
     }
   } catch (err) {
     console.error(err);
