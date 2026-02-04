@@ -1,3 +1,5 @@
+Demo with Supabase:
+https://nextjslogin-fatkhulloh.vercel.app
 🚀 Project Overview
 
 Project ini adalah aplikasi web fullstack berbasis Next.js dengan fitur autentikasi (login & register), Dark / Light Mode, serta proteksi keamanan menggunakan JWT dan Rate Limiting.
