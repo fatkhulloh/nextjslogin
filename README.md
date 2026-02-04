@@ -1,3 +1,5 @@
+Note: Repo ini untuk public, untuk yang di deploy menggunakan repo private yang sudah di upgrade..
+
 🚀 Project Overview
 
 Project ini adalah aplikasi web fullstack berbasis Next.js dengan fitur autentikasi (login & register), Dark / Light Mode, serta proteksi keamanan menggunakan JWT dan Rate Limiting.
